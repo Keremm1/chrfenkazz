@@ -14,5 +14,6 @@ urlpatterns = [
     path('', include(router.urls)),
     path('login/', LoginViewSet.as_view()),
     path('logout/', LogoutViewSet.as_view()),
+    path('register/', RegisterViewSet.as_view()),
 ]
 

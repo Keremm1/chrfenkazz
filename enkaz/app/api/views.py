@@ -6,20 +6,26 @@ from rest_framework import status
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
 from rest_framework.views import APIView
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
 
 class UserViewSet(viewsets.ModelViewSet):
     serializer_class = UserSerializer
     queryset = User.objects.all()
     lookup_field = 'id'
 
-    def create(self, request, *args, **kwargs):
+class RegisterViewSet(APIView):
+    @method_decorator(csrf_exempt)
+    def post(self, request, format=None):
         username = request.data.get('username')
+        email = request.data.get('email')
         password = request.data.get('password')
-        user = User.objects.create_user(username=username, password=password, email="default@gmail.com")
+        user = User.objects.create_user(username=username, email=email, password=password)
         user.save()
-        return Response("Kullanıcı oluşturuldu", status=status.HTTP_201_CREATED)
+        return Response("Kayıt başarılı", status=status.HTTP_200_OK)
 
 class LoginViewSet(APIView):
+    @method_decorator(csrf_exempt)
     def post(self, request, format=None):
         username = request.data.get('username')
         password = request.data.get('password')
@@ -31,6 +37,7 @@ class LoginViewSet(APIView):
             return Response("Giriş başarısız", status=status.HTTP_401_UNAUTHORIZED)
 
 class LogoutViewSet(APIView):
+    @method_decorator(csrf_exempt)
     def post(self, request, format=None):
         logout(request)
         return Response("Çıkış başarılı", status=status.HTTP_200_OK)

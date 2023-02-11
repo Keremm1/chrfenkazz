@@ -2,7 +2,7 @@ from django.urls import path, include
 
 from .views import *
 
-viewss = {HelpModel: HelpModelViewSet, CategoryModel: CategoryViewSet, CanModel: CanModelViewSet}
+viewss = {HelpModel: HelpModelViewSet, CategoryModel: CategoryViewSet, CanModel: CanModelViewSet,User: UserViewSet}
 
 from rest_framework import routers
 
@@ -12,5 +12,7 @@ for model, view in viewss.items():
 
 urlpatterns = [
     path('', include(router.urls)),
+    path('login/', LoginViewSet.as_view()),
+    path('logout/', LogoutViewSet.as_view()),
 ]
 

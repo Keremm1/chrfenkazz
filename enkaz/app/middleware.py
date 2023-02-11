@@ -10,4 +10,3 @@ class IPBanMiddleware:
             return HttpResponseForbidden("Your IP is banned.")
         response = self.get_response(request)
         return response
-

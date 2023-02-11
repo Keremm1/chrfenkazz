@@ -10,7 +10,7 @@ class RegisterView(View):
         password = request.POST.get('password')
         user = User.objects.create_user(username=username, password=password ,email="default@gmail.com")
         user.save()
-
+        return HttpResponse("Kayıt Başarılı")
 class LoginView(View):
     def post(self, request):
         username = request.POST.get('username')
@@ -18,8 +18,9 @@ class LoginView(View):
         user = authenticate(request, username=username, password=password)
         if user is not None:
             login(request, user)
-
+            return HttpResponse("Giriş Yapıldı")
+        return HttpResponse("Kullanıcı adı veya şifre hatalı")
 class LogoutView(View,LoginRequiredMixin):
     def get(self, request):
         logout(request)
-        return HttpResponse('/')
+        return HttpResponse("Çıkış yapıldı")

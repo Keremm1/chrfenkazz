@@ -6,9 +6,9 @@ from rest_framework import status
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
 from rest_framework.views import APIView
-from django.views.decorators.csrf import csrf_exempt
-from django.utils.decorators import method_decorator
-from rest_framework.permissions import IsAuthenticated, AllowAny , IsAdminUser
+from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser
+from .permissions import IsAnonymous
+
 
 class UserViewSet(viewsets.ModelViewSet):
     serializer_class = UserSerializer
@@ -17,17 +17,21 @@ class UserViewSet(viewsets.ModelViewSet):
 
 
 class RegisterViewSet(APIView):
-    @method_decorator(csrf_exempt)
+    permission_classes = [IsAnonymous]
+
     def post(self, request, format=None):
         username = request.data.get('username')
         email = request.data.get('email')
         password = request.data.get('password')
-        user = User.objects.create_user(username=username, email=email, password=password)
+        user = User.objects.create_user(
+            username=username, email=email, password=password)
         user.save()
         return Response("Kayıt başarılı", status=status.HTTP_200_OK)
 
+
 class LoginViewSet(APIView):
-    @method_decorator(csrf_exempt)
+    permission_classes = [IsAnonymous]
+
     def post(self, request, format=None):
         username = request.data.get('username')
         password = request.data.get('password')
@@ -38,12 +42,14 @@ class LoginViewSet(APIView):
         else:
             return Response("Giriş başarısız", status=status.HTTP_401_UNAUTHORIZED)
 
+
 class LogoutViewSet(APIView):
     permission_classes = [IsAuthenticated]
-    @method_decorator(csrf_exempt)
+
     def post(self, request, format=None):
         logout(request)
         return Response("Çıkış başarılı", status=status.HTTP_200_OK)
+
 
 class CategoryViewSet(viewsets.ModelViewSet):
     def get_permissions(self):
@@ -55,7 +61,7 @@ class CategoryViewSet(viewsets.ModelViewSet):
     serializer_class = CategorySerializer
     queryset = CategoryModel.objects.all()
     lookup_field = 'id'
-    
+
 
 class CanModelViewSet(viewsets.ModelViewSet):
     def get_permissions(self):
@@ -69,11 +75,12 @@ class CanModelViewSet(viewsets.ModelViewSet):
     lookup_field = 'id'
 
     def create(self, request, *args, **kwargs):
-        request.data['user'] = request.user 
+        request.data['user'] = request.user
         request.data['ip'] = request.META.get('REMOTE_ADDR')
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        instance = serializer.save(user=request.user, ip=request.META.get('REMOTE_ADDR'))
+        instance = serializer.save(
+            user=request.user, ip=request.META.get('REMOTE_ADDR'))
 
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)

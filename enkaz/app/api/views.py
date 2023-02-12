@@ -34,7 +34,7 @@ class IsJWTAuthenticatedOrSessionAuthenticated(permissions.BasePermission):
 
 class IsNotJWTAuthenticatedOrSessionAuthenticated(permissions.BasePermission):
     def has_permissio(self, request, view):
-        jwt_token = request.META.get('HTTP_AUTHORIZATION', None)
+        jwt_token = request.headers.get('Authorization', None)
         if jwt_token:
             return False
         return not request.user.is_authenticated
@@ -51,10 +51,8 @@ class RegisterViewSet(APIView):
 
     def post(self, request, format=None):
         username = request.data.get('username')
-        email = request.data.get('email')
         password = request.data.get('password')
-        user = User.objects.create_user(
-            username=username, email=email, password=password)
+        user = User.objects.create_user(username=username, email=" ", password=password)
         user.save()
         return Response("Kayıt başarılı", status=status.HTTP_200_OK)
 

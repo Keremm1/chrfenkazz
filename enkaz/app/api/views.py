@@ -8,6 +8,36 @@ from django.contrib.auth import authenticate, login, logout
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser
 from .permissions import IsAnonymous
+import jwt
+import datetime
+from rest_framework import permissions
+
+
+class IsJWTAuthenticatedOrSessionAuthenticated(permissions.BasePermission):
+    def has_permission(self, request, view):
+        # JWT token var mı kontrol et
+        jwt_token = request.META.get('HTTP_AUTHORIZATION', None)
+        if jwt_token:
+            # JWT token geçerli mi kontrol et
+            try:
+                jwt.decode(jwt_token, 'secret_key', algorithms=['HS256'])
+                return True
+            except jwt.PyJWTError:
+                return False
+        else:
+            # JWT token yoksa Django session ile kontrol et
+            return request.user.is_authenticated
+
+    def has_object_permission(self, request, view, obj):
+        return self.has_permission(request, view)
+
+
+class IsNotJWTAuthenticatedOrSessionAuthenticated(permissions.BasePermission):
+    def has_permissio(self, request, view):
+        jwt_token = request.META.get('HTTP_AUTHORIZATION', None)
+        if jwt_token:
+            return False
+        return not request.user.is_authenticated
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -17,7 +47,7 @@ class UserViewSet(viewsets.ModelViewSet):
 
 
 class RegisterViewSet(APIView):
-    permission_classes = [IsAnonymous]
+    permission_classes = [IsNotJWTAuthenticatedOrSessionAuthenticated]
 
     def post(self, request, format=None):
         username = request.data.get('username')
@@ -30,21 +60,33 @@ class RegisterViewSet(APIView):
 
 
 class LoginViewSet(APIView):
-    permission_classes = [IsAnonymous]
+    permission_classes = [IsNotJWTAuthenticatedOrSessionAuthenticated]
 
     def post(self, request, format=None):
         username = request.data.get('username')
         password = request.data.get('password')
         user = authenticate(username=username, password=password)
         if user is not None:
-            login(request, user)
-            return Response("Giriş başarılı", status=status.HTTP_200_OK)
+            if not request.COOKIES.get('allow_cookies'):
+                payload = {
+                    'username': user.username,
+                    'exp': datetime.datetime.utcnow() + datetime.timedelta(days=7)
+                }
+                token = jwt.encode(payload, 'secret_key', algorithm='HS256')
+                request.session['token'] = token
+                return Response({'token': token.decode('utf-8')})
+            else:
+                username = request.data.get('username')
+                password = request.data.get('password')
+                user = authenticate(username=username, password=password)
+                login(request, user)
+                return Response("Giriş başarılı", status=status.HTTP_200_OK)
         else:
             return Response("Giriş başarısız", status=status.HTTP_401_UNAUTHORIZED)
 
 
 class LogoutViewSet(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsJWTAuthenticatedOrSessionAuthenticated]
 
     def post(self, request, format=None):
         logout(request)
@@ -66,7 +108,7 @@ class CategoryViewSet(viewsets.ModelViewSet):
 class CanModelViewSet(viewsets.ModelViewSet):
     def get_permissions(self):
         if self.action in ['create', 'update', 'destroy']:
-            permission_classes = [IsAuthenticated]
+            permission_classes = [IsJWTAuthenticatedOrSessionAuthenticated]
         else:
             permission_classes = [AllowAny]
         return [permission() for permission in permission_classes]
@@ -89,7 +131,7 @@ class CanModelViewSet(viewsets.ModelViewSet):
 class HelpModelViewSet(viewsets.ModelViewSet):
     def get_permissions(self):
         if self.action in ['create', 'update', 'destroy']:
-            permission_classes = [IsAuthenticated]
+            permission_classes = [IsJWTAuthenticatedOrSessionAuthenticated]
         else:
             permission_classes = [AllowAny]
         return [permission() for permission in permission_classes]

@@ -89,7 +89,10 @@ class LogoutViewSet(APIView):
     permission_classes = [IsJWTAuthenticatedOrSessionAuthenticated]
 
     def post(self, request, format=None):
-        logout(request)
+        if request.headers.get('Authorization', None):
+            request.headers['Authorization'] = None
+        else:
+            logout(request)
         return Response("Çıkış başarılı", status=status.HTTP_200_OK)
 
 

@@ -16,7 +16,7 @@ from rest_framework import permissions
 class IsJWTAuthenticatedOrSessionAuthenticated(permissions.BasePermission):
     def has_permission(self, request, view):
         # JWT token var mı kontrol et
-        jwt_token = request.META.get('HTTP_AUTHORIZATION', None)
+        jwt_token = request.headers.get('Authorization', None)
         if jwt_token:
             # JWT token geçerli mi kontrol et
             try:
@@ -73,7 +73,7 @@ class LoginViewSet(APIView):
                     'exp': datetime.datetime.utcnow() + datetime.timedelta(days=7)
                 }
                 token = jwt.encode(payload, 'secret_key', algorithm='HS256')
-                request.session['token'] = token
+                request.headers['Authorization'] = token
                 return Response({'token': token.decode('utf-8')})
             else:
                 username = request.data.get('username')

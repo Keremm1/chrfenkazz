@@ -8,11 +8,13 @@ from django.contrib.auth import authenticate, login, logout
 from rest_framework.views import APIView
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
+from rest_framework.permissions import IsAuthenticated, AllowAny , IsAdminUser
 
 class UserViewSet(viewsets.ModelViewSet):
     serializer_class = UserSerializer
     queryset = User.objects.all()
     lookup_field = 'id'
+
 
 class RegisterViewSet(APIView):
     @method_decorator(csrf_exempt)
@@ -37,23 +39,37 @@ class LoginViewSet(APIView):
             return Response("Giriş başarısız", status=status.HTTP_401_UNAUTHORIZED)
 
 class LogoutViewSet(APIView):
+    permission_classes = [IsAuthenticated]
     @method_decorator(csrf_exempt)
     def post(self, request, format=None):
         logout(request)
         return Response("Çıkış başarılı", status=status.HTTP_200_OK)
 
 class CategoryViewSet(viewsets.ModelViewSet):
+    def get_permissions(self):
+        if self.action in ['create', 'update', 'destroy']:
+            permission_classes = [IsAdminUser]
+        else:
+            permission_classes = [AllowAny]
+        return [permission() for permission in permission_classes]
     serializer_class = CategorySerializer
     queryset = CategoryModel.objects.all()
     lookup_field = 'id'
+    
 
 class CanModelViewSet(viewsets.ModelViewSet):
+    def get_permissions(self):
+        if self.action in ['create', 'update', 'destroy']:
+            permission_classes = [IsAuthenticated]
+        else:
+            permission_classes = [AllowAny]
+        return [permission() for permission in permission_classes]
     serializer_class = CanModelSerializer
     queryset = CanModel.objects.all()
     lookup_field = 'id'
 
     def create(self, request, *args, **kwargs):
-        request.data['user'] = request.user
+        request.data['user'] = request.user 
         request.data['ip'] = request.META.get('REMOTE_ADDR')
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -64,6 +80,12 @@ class CanModelViewSet(viewsets.ModelViewSet):
 
 
 class HelpModelViewSet(viewsets.ModelViewSet):
+    def get_permissions(self):
+        if self.action in ['create', 'update', 'destroy']:
+            permission_classes = [IsAuthenticated]
+        else:
+            permission_classes = [AllowAny]
+        return [permission() for permission in permission_classes]
     serializer_class = HelpModelSerializer
     queryset = HelpModel.objects.all()
     lookup_field = 'id'

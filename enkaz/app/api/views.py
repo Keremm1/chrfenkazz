@@ -70,7 +70,7 @@ class CanModelViewSet(viewsets.ModelViewSet):
         if self.action in ['create', 'update']:
             permission_classes = [IsAuthenticated]
         elif self.action == 'destroy':
-            permission_classes = [IsOwner]
+            permission_classes = [IsOwner, IsAdminUser]
         else:
             permission_classes = [AllowAny]
         return [permission() for permission in permission_classes]
@@ -94,7 +94,7 @@ class HelpModelViewSet(viewsets.ModelViewSet):
         if self.action in ['create', 'update']:
             permission_classes = [IsAuthenticated]
         elif self.action == 'destroy':
-            permission_classes = [IsOwner]
+            permission_classes = [IsOwner, IsAdminUser]
         else:
             permission_classes = [AllowAny]
         return [permission() for permission in permission_classes]

@@ -23,7 +23,7 @@ class RegisterViewSet(APIView):
     def post(self, request, format=None):
         username = request.data.get('username')
         password = request.data.get('password')
-        user = User.objects.create_user(username=username, email=" ", password=password)
+        user = User.objects.create_user(username=username, email=None, password=password)
         user.save()
         return Response("Kayıt başarılı", status=status.HTTP_200_OK)
 

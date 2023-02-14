@@ -21,10 +21,10 @@ DEBUG = True
 # ALLOWED_HOSTS = ['*']
 
 INSTALLED_APPS = [
+    'django.contrib.sessions',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
-    'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
@@ -34,17 +34,18 @@ INSTALLED_APPS = [
 ]
 CORS_ORIGIN_ALLOW_ALL = True
 MIDDLEWARE = [
-    'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
+    'django.middleware.security.SecurityMiddleware',
+    'django.middleware.common.CommonMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'app.middleware.IPBanMiddleware',
     'corsheaders.middleware.CorsMiddleware',
 ]
 
+CSRF_USE_SESSIONS = True
+SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
 ROOT_URLCONF = 'enkaz.urls'
 
 TEMPLATES = [
@@ -107,5 +108,4 @@ STATIC_URL = '/static/'
 MEDIA_URL = '/media/' 
 
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-
 

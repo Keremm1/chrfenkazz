@@ -8,36 +8,7 @@ from django.contrib.auth import authenticate, login, logout
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser
 from .permissions import IsAnonymous
-import jwt
-import datetime
-from rest_framework import permissions
-
-
-class IsJWTAuthenticatedOrSessionAuthenticated(permissions.BasePermission):
-    def has_permission(self, request, view):
-        # JWT token var mı kontrol et
-        jwt_token = request.headers.get('Authorization', None)
-        if jwt_token:
-            # JWT token geçerli mi kontrol et
-            try:
-                jwt.decode(jwt_token, 'secret_key', algorithms=['HS256'])
-                return True
-            except jwt.PyJWTError:
-                return False
-        else:
-            # JWT token yoksa Django session ile kontrol et
-            return request.user.is_authenticated
-
-    def has_object_permission(self, request, view, obj):
-        return self.has_permission(request, view)
-
-
-class IsNotJWTAuthenticatedOrSessionAuthenticated(permissions.BasePermission):
-    def has_permissio(self, request, view):
-        jwt_token = request.headers.get('Authorization', None)
-        if jwt_token:
-            return False
-        return not request.user.is_authenticated
+from django.middleware.csrf import CsrfViewMiddleware
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -47,7 +18,7 @@ class UserViewSet(viewsets.ModelViewSet):
 
 
 class RegisterViewSet(APIView):
-    permission_classes = [IsNotJWTAuthenticatedOrSessionAuthenticated]
+    permission_classes = [IsAnonymous]
 
     def post(self, request, format=None):
         username = request.data.get('username')
@@ -56,41 +27,33 @@ class RegisterViewSet(APIView):
         user.save()
         return Response("Kayıt başarılı", status=status.HTTP_200_OK)
 
-
+from django.middleware.csrf import CsrfViewMiddleware
+from django.contrib.sessions.middleware import SessionMiddleware
+from django.contrib.sessions.backends.cache import SessionStore
+from django.contrib.sessions.backends.db import SessionStore
 class LoginViewSet(APIView):
-    permission_classes = [IsNotJWTAuthenticatedOrSessionAuthenticated]
-
+    # permission_classes = [IsAnonymous]
+    def get(self, request, format=None):
+        return Response(request.session, status=status.HTTP_200_OK)
     def post(self, request, format=None):
         username = request.data.get('username')
         password = request.data.get('password')
         user = authenticate(username=username, password=password)
         if user is not None:
-            if not request.COOKIES.get('allow_cookies'):
-                payload = {
-                    'username': user.username,
-                    'exp': datetime.datetime.utcnow() + datetime.timedelta(days=7)
-                }
-                token = jwt.encode(payload, 'secret_key', algorithm='HS256')
-                request.headers['Authorization'] = token
-                return Response({'token': token.decode('utf-8')})
-            else:
-                username = request.data.get('username')
-                password = request.data.get('password')
-                user = authenticate(username=username, password=password)
-                login(request, user)
-                return Response("Giriş başarılı", status=status.HTTP_200_OK)
+            username = request.data.get('username')
+            password = request.data.get('password')
+            user = authenticate(username=username, password=password)
+            login(request, user)
+            return Response("Giriş başarılı", status=status.HTTP_200_OK)
         else:
             return Response("Giriş başarısız", status=status.HTTP_401_UNAUTHORIZED)
 
 
 class LogoutViewSet(APIView):
-    permission_classes = [IsJWTAuthenticatedOrSessionAuthenticated]
+    permission_classes = [IsAuthenticated]
 
     def post(self, request, format=None):
-        if request.headers.get('Authorization', None):
-            request.headers['Authorization'] = None
-        else:
-            logout(request)
+        logout(request)
         return Response("Çıkış başarılı", status=status.HTTP_200_OK)
 
 
@@ -109,7 +72,7 @@ class CategoryViewSet(viewsets.ModelViewSet):
 class CanModelViewSet(viewsets.ModelViewSet):
     def get_permissions(self):
         if self.action in ['create', 'update', 'destroy']:
-            permission_classes = [IsJWTAuthenticatedOrSessionAuthenticated]
+            permission_classes = [IsAuthenticated]
         else:
             permission_classes = [AllowAny]
         return [permission() for permission in permission_classes]
@@ -132,7 +95,7 @@ class CanModelViewSet(viewsets.ModelViewSet):
 class HelpModelViewSet(viewsets.ModelViewSet):
     def get_permissions(self):
         if self.action in ['create', 'update', 'destroy']:
-            permission_classes = [IsJWTAuthenticatedOrSessionAuthenticated]
+            permission_classes = [IsAuthenticated]
         else:
             permission_classes = [AllowAny]
         return [permission() for permission in permission_classes]

@@ -45,6 +45,7 @@ MIDDLEWARE = [
 ]
 
 SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
+
 ROOT_URLCONF = 'enkaz.urls'
 
 TEMPLATES = [

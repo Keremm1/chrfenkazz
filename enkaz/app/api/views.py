@@ -7,8 +7,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser
-from .permissions import IsAnonymous
-from django.middleware.csrf import CsrfViewMiddleware
+from .permissions import IsAnonymous, IsOwner
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -68,8 +67,10 @@ class CategoryViewSet(viewsets.ModelViewSet):
 
 class CanModelViewSet(viewsets.ModelViewSet):
     def get_permissions(self):
-        if self.action in ['create', 'update', 'destroy']:
+        if self.action in ['create', 'update']:
             permission_classes = [IsAuthenticated]
+        elif self.action == 'destroy':
+            permission_classes = [IsOwner]
         else:
             permission_classes = [AllowAny]
         return [permission() for permission in permission_classes]
@@ -82,17 +83,18 @@ class CanModelViewSet(viewsets.ModelViewSet):
         request.data['ip'] = request.META.get('REMOTE_ADDR')
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        instance = serializer.save(
-            user=request.user, ip=request.META.get('REMOTE_ADDR'))
-
+        serializer.save(user=request.user, ip=request.META.get('REMOTE_ADDR'))
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
 
+
 class HelpModelViewSet(viewsets.ModelViewSet):
     def get_permissions(self):
-        if self.action in ['create', 'update', 'destroy']:
+        if self.action in ['create', 'update']:
             permission_classes = [IsAuthenticated]
+        elif self.action == 'destroy':
+            permission_classes = [IsOwner]
         else:
             permission_classes = [AllowAny]
         return [permission() for permission in permission_classes]
@@ -113,3 +115,4 @@ class HelpModelViewSet(viewsets.ModelViewSet):
 
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+

@@ -14,10 +14,10 @@ class UserViewSet(viewsets.ModelViewSet):
     serializer_class = UserSerializer
     queryset = User.objects.all()
     lookup_field = 'id'
-
+    permission_classes = [IsAdminUser]
 
 class RegisterViewSet(APIView):
-    permission_classes = [IsAnonymous]
+    permission_classes = [IsAnonymous,IsAdminUser]
 
     def post(self, request, format=None):
         username = request.data.get('username')

@@ -7,7 +7,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser
-from .permissions import IsAnonymous, IsOwner
+from .permissions import IsAnonymous, IsAdminUserorIsOwner, IsAdminUserorIsAnonymous
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -17,7 +17,7 @@ class UserViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAdminUser]
 
 class RegisterViewSet(APIView):
-    permission_classes = [IsAnonymous,IsAdminUser]
+    permission_classes = [IsAdminUserorIsAnonymous]
 
     def post(self, request, format=None):
         username = request.data.get('username')
@@ -70,7 +70,7 @@ class CanModelViewSet(viewsets.ModelViewSet):
         if self.action in ['create', 'update']:
             permission_classes = [IsAuthenticated]
         elif self.action == 'destroy':
-            permission_classes = [IsOwner, IsAdminUser]
+            permission_classes = [IsAdminUserorIsOwner]
         else:
             permission_classes = [AllowAny]
         return [permission() for permission in permission_classes]
@@ -94,7 +94,7 @@ class HelpModelViewSet(viewsets.ModelViewSet):
         if self.action in ['create', 'update']:
             permission_classes = [IsAuthenticated]
         elif self.action == 'destroy':
-            permission_classes = [IsOwner, IsAdminUser]
+            permission_classes = [IsAdminUserorIsOwner]
         else:
             permission_classes = [AllowAny]
         return [permission() for permission in permission_classes]

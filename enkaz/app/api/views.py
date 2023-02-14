@@ -27,12 +27,9 @@ class RegisterViewSet(APIView):
         user.save()
         return Response("Kayıt başarılı", status=status.HTTP_200_OK)
 
-from django.middleware.csrf import CsrfViewMiddleware
-from django.contrib.sessions.middleware import SessionMiddleware
-from django.contrib.sessions.backends.cache import SessionStore
-from django.contrib.sessions.backends.db import SessionStore
+
 class LoginViewSet(APIView):
-    # permission_classes = [IsAnonymous]
+    permission_classes = [IsAnonymous]
     def get(self, request, format=None):
         return Response(request.session, status=status.HTTP_200_OK)
     def post(self, request, format=None):

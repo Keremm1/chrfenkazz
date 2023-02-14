@@ -44,7 +44,6 @@ MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
 ]
 
-CSRF_USE_SESSIONS = True
 SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
 ROOT_URLCONF = 'enkaz.urls'
 
